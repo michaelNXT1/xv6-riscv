@@ -1,4 +1,5 @@
 #include "uthread.h"
+#include "user.h"
 
 struct uthread *current_uthread;
 
@@ -10,8 +11,8 @@ int uthread_create(void (*start_func)(), enum sched_priority priority)
 	{
 		if (iter_thread->state == FREE)
 		{
-			iter_thread->context.ra = start_func;
-			iter_thread->context.sp = iter_thread->ustack;
+			iter_thread->context.ra = (uint64) start_func;
+			iter_thread->context.sp = (uint64) iter_thread->ustack;
 			iter_thread->context.sp++;
 			iter_thread->priority = priority;
 			iter_thread->state = RUNNABLE;
@@ -35,13 +36,12 @@ struct uthread *get_max_priority_uthread(struct uthread *my_thread)
 	my_thread_index = my_thread_index < -1 || my_thread_index > MAX_UTHREADS ? MAX_UTHREADS - 1 : my_thread_index;
 	int i = (my_thread_index + 1) % MAX_UTHREADS;
 	int max_priority = -1;
-	int max_index = -1;
 
 	int done = 0;
 	while (!done)
 	{
 		struct uthread *t = &uthread_table[i];
-		if ((is_runnable(t) || is_running(t)) && getPriorityAsInt(t->priority) > max_priority)
+		if ((t->state==RUNNABLE || t->state==RUNNING) && getPriorityAsInt(t->priority) > max_priority)
 		{
 			max_priority = getPriorityAsInt(t->priority);
 			ret_thread = t;
@@ -72,7 +72,7 @@ void uthread_exit()
 		if (iter_thread->state != FREE)
 			allFree = 0;
 	if (allFree)
-		exit();
+		exit(0);
 	struct uthread *next_to_run = get_max_priority_uthread(my_thread);
 	uswtch(&my_thread->context, &next_to_run->context);
 }
@@ -92,7 +92,9 @@ int uthread_start_all()
 enum sched_priority uthread_set_priority(enum sched_priority priority)
 {
 	uthread_self()->priority = priority;
+	return priority;
 }
+
 enum sched_priority uthread_get_priority()
 {
 	return uthread_self()->priority;

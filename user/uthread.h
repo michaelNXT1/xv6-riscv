@@ -1,3 +1,5 @@
+#include "kernel/types.h"
+
 #define STACK_SIZE  4000
 #define MAX_UTHREADS  4
 
@@ -8,7 +10,6 @@ enum tstate { FREE, RUNNING, RUNNABLE };
 
 int started=0;
 
-struct uthread uthread_table[MAX_UTHREADS]={0};
 
 // Saved registers for context switches.
 struct context {
@@ -38,6 +39,8 @@ struct uthread {
 
 	int					thread_index;	//thread index
 };
+
+struct uthread uthread_table[MAX_UTHREADS]={0};
 
 extern void uswtch(struct context*, struct context*);
 
